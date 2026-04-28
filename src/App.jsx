@@ -43,7 +43,7 @@ function AppRoutes() {
       <Route
         path="/analyze"
         element={
-          <div className="min-h-screen bg-gradient-to-br from-lilac-100 via-blush-50 to-white">
+          <div className="min-h-screen bg-gradient-to-br from-coal-950 via-coal-900 to-coal-800">
             <Header />
             <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
               <Home onAssetAnalyzed={handleAssetAnalyzed} />
@@ -54,7 +54,7 @@ function AppRoutes() {
       <Route
         path="/dashboard"
         element={
-          <div className="min-h-screen bg-gradient-to-br from-lilac-100 via-blush-50 to-white">
+          <div className="min-h-screen bg-gradient-to-br from-coal-950 via-coal-900 to-coal-800">
             <Header />
             <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
               <Dashboard assets={assets} onDeleteAsset={handleDeleteAsset} />

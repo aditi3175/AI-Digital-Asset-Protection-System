@@ -9,20 +9,20 @@ const navItems = [
 
 function Header() {
   return (
-    <header className="sticky top-0 z-50 border-b border-white/20 bg-white/70 shadow-lg shadow-lilac-200/30 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-coal-700/50 bg-coal-900/80 shadow-lg shadow-coal-950/50 backdrop-blur-xl">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         {/* App name */}
         <NavLink to="/" className="group flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-blush-500 to-lilac-600 text-sm font-black text-white shadow-md shadow-blush-200/50 transition-transform duration-200 group-hover:scale-105">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-tea-500 to-tea-700 text-sm font-black text-coal-950 shadow-md shadow-tea-500/30 transition-transform duration-200 group-hover:scale-105">
             AI
           </div>
-          <span className="bg-gradient-to-r from-lilac-900 via-blush-700 to-lilac-800 bg-clip-text text-lg font-extrabold tracking-tight text-transparent">
+          <span className="bg-gradient-to-r from-tea-300 via-tea-400 to-tea-300 bg-clip-text text-lg font-extrabold tracking-tight text-transparent">
             AI Asset Guard
           </span>
         </NavLink>
 
         {/* Navigation */}
-        <nav className="flex items-center gap-1 rounded-xl border border-lilac-100/80 bg-lilac-50/60 p-1 backdrop-blur-sm">
+        <nav className="flex items-center gap-1 rounded-xl border border-coal-700/60 bg-coal-800/70 p-1 backdrop-blur-sm">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
@@ -31,8 +31,8 @@ function Header() {
               className={({ isActive }) =>
                 `flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200 ${
                   isActive
-                    ? 'bg-gradient-to-r from-blush-500 to-lilac-500 text-white shadow-lg shadow-blush-200/50 ring-1 ring-blush-300/30'
-                    : 'text-lilac-600 hover:bg-white hover:text-lilac-900 hover:shadow-sm'
+                    ? 'bg-gradient-to-r from-tea-500 to-tea-600 text-coal-950 shadow-lg shadow-tea-500/30 ring-1 ring-tea-400/30'
+                    : 'text-coal-300 hover:bg-coal-700/60 hover:text-tea-300'
                 }`
               }
             >
