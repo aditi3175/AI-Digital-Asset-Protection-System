@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { ScanSearch, Fingerprint, ShieldCheck, Info } from 'lucide-react';
+import { ScanSearch, Fingerprint, ShieldCheck, Info, Sparkles, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { generateExplanation } from '../services/gemini.js';
 
 const getSimilarityLabel = (value) => {
   if (value >= 80) return { text: 'High', color: 'text-red-400 bg-red-500/15' };
@@ -10,10 +12,16 @@ const getSimilarityLabel = (value) => {
 function AnalyzePanel({ onAssetAnalyzed, uploadedImage }) {
   const [analysisResult, setAnalysisResult] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
+  const [aiExplanation, setAiExplanation] = useState('');
+  const [isExplaining, setIsExplaining] = useState(false);
+  const [explanationError, setExplanationError] = useState('');
 
   useEffect(() => {
     setAnalysisResult(null);
     setIsScanning(false);
+    setAiExplanation('');
+    setIsExplaining(false);
+    setExplanationError('');
   }, [uploadedImage]);
 
   const createFingerprint = () => {
@@ -32,6 +40,8 @@ function AnalyzePanel({ onAssetAnalyzed, uploadedImage }) {
   const handleAnalyze = () => {
     if (!uploadedImage || isScanning) return;
     setAnalysisResult(null);
+    setAiExplanation('');
+    setExplanationError('');
     setIsScanning(true);
 
     window.setTimeout(async () => {
@@ -50,16 +60,30 @@ function AnalyzePanel({ onAssetAnalyzed, uploadedImage }) {
         type: similarity >= 80 ? 'Modified' : 'Original',
       };
 
+      setAnalysisResult(result);
+      setIsScanning(false);
+
+      // Fetch Gemini explanation, then navigate with the full asset
+      setIsExplaining(true);
+      let explanation = '';
+      try {
+        explanation = await generateExplanation(result);
+        setAiExplanation(explanation);
+      } catch (err) {
+        setExplanationError(err.message || 'Failed to generate explanation.');
+      } finally {
+        setIsExplaining(false);
+      }
+
       const asset = {
         id: crypto.randomUUID(),
         imageUrl,
         name: uploadedImage?.name ?? 'Untitled image',
         fingerprint: result.fingerprint,
         result,
+        aiExplanation: explanation,
       };
 
-      setAnalysisResult(result);
-      setIsScanning(false);
       onAssetAnalyzed(asset);
     }, 1500);
   };
@@ -82,11 +106,11 @@ function AnalyzePanel({ onAssetAnalyzed, uploadedImage }) {
       {/* Button */}
       <button
         className={`mt-6 w-full rounded-xl px-4 py-3.5 text-sm font-bold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-tea-400/50 ${
-          !uploadedImage || isScanning
+          !uploadedImage || isScanning || isExplaining
             ? 'cursor-not-allowed border border-coal-700 bg-coal-700/50 text-coal-500 shadow-none'
             : 'bg-gradient-to-r from-tea-500 to-tea-600 text-coal-950 shadow-lg shadow-tea-500/25 hover:-translate-y-0.5 hover:from-tea-400 hover:to-tea-500 hover:shadow-xl active:translate-y-0'
         }`}
-        disabled={!uploadedImage || isScanning}
+        disabled={!uploadedImage || isScanning || isExplaining}
         onClick={handleAnalyze}
         type="button"
       >
@@ -94,6 +118,11 @@ function AnalyzePanel({ onAssetAnalyzed, uploadedImage }) {
           <span className="flex items-center justify-center gap-2">
             <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-coal-950/30 border-t-coal-950" />
             Scanning...
+          </span>
+        ) : isExplaining ? (
+          <span className="flex items-center justify-center gap-2">
+            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-coal-950/30 border-t-coal-950" />
+            Generating AI insight...
           </span>
         ) : 'Analyze Image'}
       </button>
@@ -149,6 +178,41 @@ function AnalyzePanel({ onAssetAnalyzed, uploadedImage }) {
             <p className="mt-4 pl-2 text-sm font-medium text-coal-500">Click Analyze Image to generate a similarity result.</p>
           )}
         </div>
+
+        {/* AI Explanation — shown during/after Gemini call */}
+        {(isExplaining || aiExplanation || explanationError) && (
+          <div className="rounded-xl border border-coal-700/50 bg-gradient-to-br from-coal-800/60 to-coal-900/60 p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <Sparkles size={14} className="text-tea-400" strokeWidth={2.2} />
+              <p className="text-xs font-bold uppercase tracking-wider text-tea-400">AI Explanation</p>
+              <span className="rounded-full bg-tea-500/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-tea-400">Gemini</span>
+            </div>
+            {isExplaining ? (
+              <div className="flex items-center gap-2">
+                <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-tea-700 border-t-tea-400" />
+                <p className="text-sm text-coal-400">Generating explanation...</p>
+              </div>
+            ) : explanationError ? (
+              <div className="flex items-start gap-2 rounded-lg bg-red-500/10 px-3 py-2">
+                <span className="mt-0.5 text-red-400">⚠</span>
+                <p className="text-sm text-red-300">{explanationError}</p>
+              </div>
+            ) : (
+              <p className="text-sm leading-relaxed text-coal-200">{aiExplanation}</p>
+            )}
+          </div>
+        )}
+
+        {/* Go to Dashboard button — only after analysis is done */}
+        {analysisResult && !isScanning && !isExplaining && (
+          <Link
+            to="/dashboard"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-tea-500 to-tea-600 px-4 py-3.5 text-sm font-bold text-coal-950 shadow-lg shadow-tea-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:from-tea-400 hover:to-tea-500 hover:shadow-xl active:translate-y-0"
+          >
+            Go to Dashboard
+            <ArrowRight size={16} strokeWidth={2.5} />
+          </Link>
+        )}
 
         {/* Similarity legend */}
         <div className="rounded-lg border border-coal-700/40 bg-coal-900/30 px-4 py-3">

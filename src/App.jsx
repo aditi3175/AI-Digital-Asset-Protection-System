@@ -26,7 +26,6 @@ function AppRoutes() {
 
   const handleAssetAnalyzed = (asset) => {
     setAssets((currentAssets) => [asset, ...currentAssets]);
-    navigate('/dashboard');
   };
 
   const handleDeleteAsset = (assetId) => {

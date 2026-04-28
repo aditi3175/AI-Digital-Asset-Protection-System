@@ -1,3 +1,5 @@
+import { Sparkles } from 'lucide-react';
+
 function ResultCard({ asset, onDeleteAsset }) {
   const similarity = asset.result.similarity;
   const badgeStyles =
@@ -63,6 +65,18 @@ function ResultCard({ asset, onDeleteAsset }) {
             </dd>
           </div>
         </dl>
+
+        {/* AI Explanation */}
+        {asset.aiExplanation && (
+          <div className="rounded-lg border border-coal-700/50 bg-gradient-to-br from-coal-800/60 to-coal-900/60 p-3">
+            <div className="mb-2 flex items-center gap-1.5">
+              <Sparkles size={12} className="text-tea-400" strokeWidth={2.2} />
+              <p className="text-[10px] font-bold uppercase tracking-wider text-tea-400">AI Explanation</p>
+              <span className="rounded-full bg-tea-500/15 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-tea-400">Gemini</span>
+            </div>
+            <p className="text-xs leading-relaxed text-coal-300">{asset.aiExplanation}</p>
+          </div>
+        )}
       </div>
     </article>
   );
