@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { ScanSearch, Fingerprint, ShieldCheck, Info, Sparkles, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { generateExplanation } from '../services/gemini.js';
@@ -15,6 +15,7 @@ function AnalyzePanel({ onAssetAnalyzed, uploadedImage }) {
   const [aiExplanation, setAiExplanation] = useState('');
   const [isExplaining, setIsExplaining] = useState(false);
   const [explanationError, setExplanationError] = useState('');
+  const isProcessingRef = useRef(false);
 
   useEffect(() => {
     setAnalysisResult(null);
@@ -22,6 +23,7 @@ function AnalyzePanel({ onAssetAnalyzed, uploadedImage }) {
     setAiExplanation('');
     setIsExplaining(false);
     setExplanationError('');
+    isProcessingRef.current = false;
   }, [uploadedImage]);
 
   const createFingerprint = () => {
@@ -38,7 +40,9 @@ function AnalyzePanel({ onAssetAnalyzed, uploadedImage }) {
     });
 
   const handleAnalyze = () => {
-    if (!uploadedImage || isScanning) return;
+    if (!uploadedImage || isProcessingRef.current) return;
+    isProcessingRef.current = true;
+    
     setAnalysisResult(null);
     setAiExplanation('');
     setExplanationError('');
@@ -67,13 +71,36 @@ function AnalyzePanel({ onAssetAnalyzed, uploadedImage }) {
       setIsExplaining(true);
       let explanation = '';
       try {
-        explanation = await generateExplanation(result);
-        setAiExplanation(explanation);
-      } catch (err) {
-        setExplanationError(err.message || 'Failed to generate explanation.');
-      } finally {
-        setIsExplaining(false);
-      }
+      // ✅ Prevent multiple Gemini calls (session-safe)
+        const alreadyCalled = sessionStorage.getItem('gemini_called');
+        if (alreadyCalled) {
+          explanation = `This asset shows approximately ${result.similarity}% similarity. Based on visual patterns, it is classified as ${result.type}.`;
+        } else {
+          sessionStorage.setItem('gemini_called', 'true');
+
+        // ✅ Add delay to avoid rate burst
+     await new Promise((res) => setTimeout(res, 1000));
+
+    explanation = await generateExplanation(result);
+  }
+
+  setAiExplanation(explanation);
+} catch (err) {
+  console.error("Gemini Error:", err);
+
+  // ✅ Handle 429 specifically
+  if (err.message?.includes('429')) {
+    explanation = `This asset shows approximately ${result.similarity}% similarity. Based on visual patterns, it is classified as ${result.type}.`;
+
+    setExplanationError('AI is busy right now. Showing estimated explanation.');
+    setAiExplanation(explanation);
+  } else {
+    setExplanationError('Failed to generate explanation.');
+  }
+} finally {
+  setIsExplaining(false);
+  isProcessingRef.current = false;
+}
 
       const asset = {
         id: crypto.randomUUID(),
